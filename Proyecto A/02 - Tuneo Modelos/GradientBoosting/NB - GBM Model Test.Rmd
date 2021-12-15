@@ -1,0 +1,190 @@
+---
+title: "NB - GBM Model Test"
+output: html_document
+---
+
+# Paquetes
+
+```{r}
+library(caret)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(doMC) 
+```
+
+# Dataset
+
+```{r}
+# Linux
+data <- read_csv('Proyecto A/00 - Creación Dataset y Variables/Dataset_Modelos.csv')
+```
+
+Eliminamos las variables con caracteres para crear las particiones de train y test.
+
+```{r}
+char_vars <- c("X1", 
+               "url", 
+               "scheme", 
+               "domain_complete", 
+               "domain", 
+               "subdomain", 
+               "suffix", 
+               "domain_subdomain", 
+               "path", 
+               "suffix2")
+
+df <- data %>%
+  select(-char_vars)
+```
+
+
+
+```{r}
+set.seed(45)
+train_index <- createDataPartition(y = df$phishing, times = 1, p = 0.80, list = FALSE)
+
+train <- df[train_index,]
+test <- df[-train_index,]
+
+train <- train %>%
+  mutate(phishing = factor(ifelse(phishing==1, "Phish", "NoPhish")))
+test <- test %>%
+  mutate(phishing = factor(ifelse(phishing==1, "Phish", "NoPhish")))
+
+#train <- train[,1:44]
+#test <- test[,1:44]
+
+rm(df)
+
+#test1 <- df[-train_index,]
+
+#test_index <- createDataPartition(y = test1$phishing, times = 1, p = 0.5, list = FALSE)
+
+#test <- test1[test_index,]
+#validation <- test1[-test_index,]
+```
+
+
+```{r}
+registerDoMC(cores = 4)
+fitControl <- trainControl(method = "none", classProbs = TRUE, allowParallel = TRUE)
+```
+
+```{r}
+gbm <- train(phishing~., 
+             data = train, 
+             method = "gbm", 
+             trControl = fitControl,
+             verbose = TRUE,
+             tuneGrid = data.frame(interaction.depth = 18,
+                                       n.trees = 250,
+                                       shrinkage = 0.11,
+                                       n.minobsinnode = 20),
+             train.fraction = 1,
+             #tuneLength = 50,
+             #preProcess = c("center", "scale"),
+             metric = "ROC")
+```
+
+```{r}
+getwd()
+saveRDS(gbm2, "Proyecto A/02 - Tuneo Modelos/GradientBoosting/GBM_sinMetric.rds")
+gbm2 <- readRDS("Proyecto A/02 - Tuneo Modelos/GradientBoosting/GBM.rds")
+```
+
+
+
+```{r}
+data.frame("Iter" = 1:250,
+           "TrainErr" = gbm$finalModel$train.error,
+           "ValidErr" = gbm$finalModel$valid.error) %>%
+  ggplot()+
+  geom_line(aes(x = Iter, y = TrainErr), color = "blue")+
+  geom_line(aes(x = Iter, y = ValidErr), color = "red")
+
+gbm$finalModel
+```
+
+Resultado con las métricas
+
+```{r}
+amazon_test <- data[-train_index,] %>%
+  mutate(phishing = factor(ifelse(phishing==1, "Phish", "NoPhish"))) %>%
+  arrange(desc(metric_ds_amazon)) %>%
+  filter(metric_ds_amazon > 0.7) %>%
+  select(-char_vars)
+```
+
+```{r}
+confusionMatrix(data = as.factor(predict(gbm, amazon_test)),
+                reference = as.factor(amazon_test$phishing),
+                positive = "Phish",
+                mode = "everything")
+```
+
+
+Resultado sin métricas
+
+```{r}
+amazon_test <- data[-train_index,] %>%
+  mutate(phishing = factor(ifelse(phishing==1, "Phish", "NoPhish"))) %>%
+  arrange(desc(metric_ds_amazon)) %>%
+  filter(metric_ds_amazon > 0.7) %>%
+  select(-char_vars)
+amazon_test <- amazon_test[,1:44]
+```
+
+```{r}
+confusionMatrix(data = as.factor(predict(gbm, amazon_test)),
+                reference = as.factor(amazon_test$phishing),
+                positive = "Phish",
+                mode = "everything")
+```
+
+
+
+```{r}
+rakuten_test <- data[-train_index,] %>%
+  mutate(phishing = factor(ifelse(phishing==1, "Phish", "NoPhish"))) %>%
+  arrange(desc(metric_ds_rakuten)) %>%
+  filter(metric_ds_rakuten > 0.7) %>%
+  select(-char_vars)
+```
+
+```{r}
+confusionMatrix(data = as.factor(predict(gbm2, rakuten_test)),
+                reference = as.factor(rakuten_test$phishing),
+                positive = "Phish",
+                mode = "everything")
+```
+
+
+Resultado sin métricas
+
+```{r}
+rakuten_test <- data[-train_index,] %>%
+  mutate(phishing = factor(ifelse(phishing==1, "Phish", "NoPhish"))) %>%
+  arrange(desc(metric_ds_rakuten)) %>%
+  filter(metric_ds_rakuten > 0.7) %>%
+  select(-char_vars)
+rakuten_test <- rakuten_test[,1:44]
+```
+
+```{r}
+confusionMatrix(data = as.factor(predict(gbm, rakuten_test)),
+                reference = as.factor(rakuten_test$phishing),
+                positive = "Phish",
+                mode = "everything")
+```
+
+
+
+```{r}
+confusionMatrix(data = as.factor(predict(gbm, test)),
+                reference = as.factor(test$phishing),
+                positive = "Phish",
+                mode = "everything")
+```
+
+

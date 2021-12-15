@@ -1,0 +1,61 @@
+Models,Data,Metric,Value
+GBM,Train,Accuracy,0.917125412
+GBM,Train,Precision,0.928891957
+GBM,Train,Recall,0.892423469
+GBM,Train,Sensitivity,0.892423469
+GBM,Test,Specificity,0.928110515
+GBM,Test,Sensitivity,0.876684361
+GBM,Test,Recall,0.876684361
+GBM,Test,Precision,0.915662651
+GBM,Train,Specificity,0.939133597
+Lasso,Train,Accuracy,0.862232265
+GBM,Test,Accuracy,0.90388961
+Lasso,Test,Specificity,0.898209579
+Lasso,Train,Precision,0.877387755
+Lasso,Train,Recall,0.82255102
+Lasso,Train,Sensitivity,0.82255102
+Lasso,Train,Specificity,0.897586254
+Lasso,Test,Sensitivity,0.823805635
+Lasso,Test,Recall,0.823805635
+Lasso,Test,Precision,0.8781284
+Lasso,Test,Accuracy,0.863166498
+RF,Train,Accuracy,0.998870165
+RF,Train,Precision,0.999795511
+RF,Test,Specificity,0.934108879
+RF,Test,Sensitivity,0.868313597
+RF,Train,Recall,0.997806122
+RF,Train,Sensitivity,0.997806122
+RF,Train,Specificity,0.999818174
+Ridge,Train,Accuracy,0.857532633
+RF,Test,Recall,0.868313597
+RF,Test,Precision,0.921460297
+RF,Test,Accuracy,0.903120342
+Ridge,Test,Specificity,0.899391075
+Ridge,Train,Precision,0.876089886
+Ridge,Train,Recall,0.81255102
+Ridge,Test,Sensitivity,0.816149449
+Ridge,Test,Recall,0.816149449
+Ridge,Train,Sensitivity,0.81255102
+Ridge,Train,Specificity,0.897608982
+SVM,Train,Accuracy,0.857580711
+SVM,Train,Precision,0.87980115
+Ridge,Test,Precision,0.878378378
+Ridge,Test,Accuracy,0.860185586
+SVM,Test,Specificity,0.90393529
+SVM,Test,Sensitivity,0.813189057
+SVM,Train,Recall,0.808137755
+SVM,Train,Sensitivity,0.808137755
+SVM,Test,Recall,0.813189057
+SVM,Test,Precision,0.882854926
+SVM,Train,Specificity,0.901631892
+SVM R,Train,Accuracy,0.883771245
+SVM R,Train,Precision,0.900939554
+SVM R,Train,Recall,0.846377551
+SVM,Test,Accuracy,0.86119525
+SVM R,Test,Specificity,0.918204126
+SVM R,Test,Sensitivity,0.851061658
+SVM R,Test,Recall,0.851061658
+SVM R,Train,Sensitivity,0.846377551
+SVM R,Train,Specificity,0.91708714
+SVM R,Test,Precision,0.902565768
+SVM R,Test,Accuracy,0.886581086

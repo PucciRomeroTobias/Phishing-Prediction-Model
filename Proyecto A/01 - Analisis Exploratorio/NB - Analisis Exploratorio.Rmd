@@ -1,0 +1,390 @@
+---
+title: "Analisis Exploratorio"
+output: html_document
+---
+
+# Paquetes
+
+```{r Paquetes}
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+library(fastDummies)
+library(purrr)
+library(tidyr)
+library(readr)
+library(FactoMineR)
+library(factoextra)
+```
+
+
+# Dataset
+
+```{r}
+# Linux
+getwd()
+data <- read_csv('Proyecto A/00 - Creación Dataset y Variables/Dataset_Modelos.csv')
+```
+
+
+```{r}
+# Windows
+data <- read_csv('../00 - Creación Dataset y Variables/Dataset_Modelos.csv')
+
+```
+
+Armo un vector con las variables no numericas que no van en el analisis. Luego armo el dataset data_numeric eliminando dichas variables del dataset.
+
+```{r}
+char_vars <- c("X1", 
+               "url", 
+               "scheme", 
+               "domain_complete", 
+               "domain", 
+               "subdomain", 
+               "suffix", 
+               "domain_subdomain", 
+               "path", 
+               "suffix2")
+
+data_numeric <- data %>%
+  select(-char_vars)
+```
+
+
+
+# Elimino columna suffix2 porque no es numerica y es solo de apoyo
+```{r}
+data$suffix2 <- NULL
+```
+
+
+
+# Funciones
+
+La función permite generar un análisis rápido de una variable o atributo de un dataset. Toma como argumentos la columna y el dataframe, más el argumento histogram que es opcional y permite elegir entre gráfico de densidad o histograma.
+
+EJ: attr_summary(data["X1"], data["phishing"], data, type = "cont")
+
+* El atributo **type** indica el tipo de variable, si es continua irá *continua* y si es categorica irá *categorica*. Por default es continua.
+* El atributo **cont_plot** permite elegir el tipo de gráfico en variable continua, entre *histograma* o *densidad*.
+
+
+```{r Función Análisis de Atributos}
+
+attr_summary <- function(variable, respuesta, data, type = "continua", cont_plot = "histograma", hist_position = "dodge", bar_position = "fill"){
+  print("Resumen Estadístico")
+  if (type == "continua"){
+    variable <- as.numeric(variable)
+  } else if (type == "categorica"){
+    variable <- as.factor(variable)
+  } else {
+    print("Mal definido el tipo de variable: continua o categorica")
+  }
+  respuesta <- as.factor(respuesta)
+  print(summary(variable))
+  if (type == "continua"){
+    print(paste("Desvío muestral:", round(sd(variable), 2)))
+    print(paste("Coeficiente de variación:", round(sd(variable)/mean(variable), 2)))
+  } else if (type == "categorica"){
+    print(paste("Proporción Positivos:", table(variable)["1"]/(table(variable)["0"]+table(variable)["1"])))
+    print("Filas corresponden a Variable - Columnas corresponden a la respuesta")
+    print(table(data$suf_ru, data$phishing))
+  }
+  my_theme <- theme(plot.title = element_text(hjust = 0.5, size = 16),
+                plot.background = element_blank(),
+                panel.background = element_blank(),
+                axis.line = element_line(colour = "black"),
+                panel.grid.major = element_line(colour = "light grey", size = 0.2),
+                panel.grid.minor = element_line(colour = "light grey", size = 0.2),
+                axis.title.y = element_text(size = 14, hjust = 0.5),
+                axis.title.x = element_text(size = 14, hjust = 0.5),
+                axis.text = element_text(size = 11))
+  
+  
+  if(type == "continua"){
+    
+    # Grafico de la distribución de la variable.
+    if (cont_plot == "densidad") {
+    print(ggplot(data, aes(x = variable))+
+      geom_density()+
+      labs(title = "Density Plot",
+           x = "Atributo o Variable",
+           y = "Densidad")+
+      my_theme)
+    } else if (cont_plot == "histograma") {
+    print(ggplot(data, aes(x = variable))+
+      geom_histogram(color="black", bins = 60)+
+      labs(title = "Histogram",
+           x = "Atributo o Variable",
+           y = "Frecuencia")+
+      my_theme)
+    }
+    
+    # Graficos de la variable contra la respuesta.
+    print(ggplot(data, aes(x = variable, fill = respuesta))+
+      geom_histogram(alpha = 0.5, position = hist_position, bins = 60)+
+      labs(title = "Histogram Plot",
+          x = "Atributo o Variable",
+          y = "Densidad")+
+      my_theme)
+    
+    print(ggplot(data, aes(x = respuesta, y = variable, color = respuesta))+
+      geom_boxplot()+
+      labs(title = "BoxPlot",
+          x = "Atributo o Variable",
+          y = "Respuesta")+
+      my_theme)
+    
+    
+  } else if (type == "categorica"){
+    print(ggplot(data, aes(x = variable))+
+    geom_bar(alpha = 0.8, color = "black")+
+    labs(title = "Barplot",
+         x = "Atributo o Variable",
+         y = "Frecuencia")+
+    my_theme)
+    
+    print(ggplot(data, aes(x = variable, fill = respuesta))+
+    geom_bar(alpha = 0.8, color = "black", position = bar_position)+
+    labs(title = "Barplot",
+         x = "Atributo o Variable",
+         y = "Frecuencia")+
+    my_theme)
+    
+  } else {
+    print("Mal definido el tipo de variable: continua o categorica")
+  
+  }
+}
+```
+
+
+# Análisis Exploratorio
+
+```{r}
+table(data$suffix2)
+```
+
+
+```{r}
+names(data)
+```
+
+```{r}
+attr_summary(data$suf_net, data$phishing, data, type = "categorica")
+```
+
+# Imágenes Informe
+
+```{r, fig.height=5, fig.width=8}
+ggplot(data, aes(x = metric_ds_amazon, fill = as.factor(phishing)))+
+      geom_histogram(alpha = 0.5, position = "dodge", bins = 60)+
+      labs(title = "Histograma Métrica Amazon",
+          x = "Métrica - Amazon",
+          y = "",
+          fill = "Phishing")+
+      theme_bw()
+
+ggplot(data, aes(x = metric_ds_rakuten, fill = as.factor(phishing)))+
+      geom_histogram(alpha = 0.5, position = "dodge", bins = 60)+
+      labs(title = "Histograma Métrica Rakuten",
+          x = "Métrica - Rakuten",
+          y = "",
+          fill = "Phishing")+
+      theme_bw()
+
+ggplot(data, aes(x = dom_car_dif, fill = as.factor(phishing)))+
+      geom_histogram(alpha = 0.5, position = "dodge", bins = 60)+
+      labs(title = "Histograma Caracteres Diferentes Dominio",
+          x = "Número de Caracteres Diferentes - Dominio",
+          y = "",
+          fill = "Phishing")+
+      theme_bw()
+
+ggplot(data, aes(x = suf_net, fill = as.factor(phishing)))+
+    geom_bar(alpha = 0.8, color = "black", position = "fill")+
+    labs(title = "Barplot Sufijo .net",
+         x = "Sufijo .net",
+         y = "Proporción",
+         fill = "Phishing")+
+    theme_bw()
+```
+
+```{r}
+data %>%
+  group_by(phishing) %>%
+  select(dom_car_dif) %>%
+  summarise(Media = median(dom_car_dif))
+```
+
+
+```{r}
+attr_summary(data$metric_ds_rakuten, data$phishing, data, type = "continua")
+```
+
+```{r}
+attr_summary(data$dom_car_dif, data$phishing, data, type = "continua")
+```
+
+```{r}
+names(data)
+```
+
+
+```{r}
+attr_summary(data$dom_cons, data$phishing, data, type = "continua")
+```
+
+```{r}
+attr_summary(data$suf_xyz, data$phishing, data, type = "categorica")
+```
+
+
+# PCA
+
+PCA de las variables métricas.
+
+```{r}
+pca <- PCA(data[,55:234], scale.unit = FALSE, ncp = 50)
+```
+
+```{r}
+summary(pca)
+```
+
+```{r}
+pca$eig
+```
+
+```{r}
+fviz_screeplot(pca)
+```
+
+
+```{r, fig.height=25, fig.width=25}
+as.data.frame(pca$var$cor[,1:10]) %>%
+  mutate(orig_var = rownames(pca$var$cor)) %>%
+  gather(key = "new_vars", value = "Corr", -orig_var) %>%
+  left_join(data.frame("new_vars" = paste0("Dim.", seq(1,10)),
+              "Contrib" = pca$eig[,1]),
+            by = "new_vars") %>%
+  ggplot(aes(x = reorder(new_vars, -Contrib), y = orig_var, fill = Corr, label = round(Corr,2)))+
+  geom_tile()+
+  geom_text(alpha = 0.7, size = 3.5)+
+  scale_fill_continuous(type = "viridis")+
+  labs(title = "Correlation Heatmap",
+       subtitle = "Correlaciones entre variables originales y dimensiones principales",
+       x = "PCA Dimensions",
+       y = "Original Dimensions",
+       fill = "Correlation")+
+  theme_light()
+```
+
+```{r}
+as.data.frame(pca$ind$coord) %>%
+  mutate(Phishing = data$phishing) %>%
+  ggplot(aes(x = `Dim.2`, y = `Dim.4`, color = as.factor(Phishing)))+
+  geom_point(alpha = 0.1)
+```
+
+```{r}
+pca2 <- PCA(scale(data_numeric[,2:25]), scale.unit = FALSE, ncp = 30)
+```
+
+```{r}
+pca2$eig
+```
+
+
+```{r}
+fviz_screeplot(pca2)
+```
+
+
+```{r, fig.height=25, fig.width=25}
+as.data.frame(pca2$var$cor) %>%
+  mutate(orig_var = rownames(pca2$var$cor)) %>%
+  gather(key = "new_vars", value = "Corr", -orig_var) %>%
+  left_join(data.frame("new_vars" = paste0("Dim.", seq(1,10)),
+              "Contrib" = pca2$eig[,1]),
+            by = "new_vars") %>%
+  ggplot(aes(x = reorder(new_vars, -Contrib), y = orig_var, fill = Corr, label = round(Corr,2)))+
+  geom_tile()+
+  geom_text(alpha = 0.7, size = 3.5)+
+  scale_fill_continuous(type = "viridis")+
+  labs(title = "Correlation Heatmap",
+       subtitle = "Correlaciones entre variables originales y dimensiones principales",
+       x = "PCA Dimensions",
+       y = "Original Dimensions",
+       fill = "Correlation")+
+  theme_light()
+```
+
+```{r}
+as.data.frame(pca2$ind$coord) %>%
+  mutate(Phishing = data$phishing) %>%
+  ggplot(aes(x = `Dim.2`, y = `Dim.3`, color = as.factor(Phishing)))+
+  geom_point(alpha = 0.1)
+```
+
+
+
+# Matriz Correlacion
+
+```{r}
+corr_mat <- cor(data[30:48])
+library(corrplot)
+corrplot(corr_mat, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+det(corr_mat2)
+```
+
+```{r}
+col<- colorRampPalette(c("blue", "white", "red"))(20)
+heatmap(x = corr_mat, col = col, symm = TRUE)
+```
+
+```{r}
+corr_mat2 <- cor(data[10:29])
+corrplot(corr_mat2, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+```
+
+```{r}
+col<- colorRampPalette(c("blue", "white", "red"))(20)
+heatmap(x = corr_mat2, col = col, symm = TRUE)
+```
+
+```{r}
+library("FactoMineR")
+library("factoextra")
+df=data[10:19]
+df[,] <- lapply(data[,] , factor)
+res.mca <- MCA(df, graph = FALSE)
+```
+
+
+#Prueba pca para variables contadoras
+```{r}
+library(psych)
+pcarot <- principal(df, nfactors=4, rotate="varimax",scores=T)
+pcarot
+pcarot$loadings
+plot(pcarot$values)
+fviz_screeplot(pcarot)
+```
+#Prueba pca para metricas
+
+```{r}
+df1=data[30:48]
+pcarot1 <- principal(df1, nfactors=5, rotate="varimax",scores=T)
+pcarot1
+pcarot1$loadings
+plot(pcarot1$values)
+
+```
+
+
+
+
